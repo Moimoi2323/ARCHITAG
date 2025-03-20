@@ -157,7 +157,6 @@ export default function Home() {
                   height={550}
                   alt="Inspiring architecture showcase"
                   className="w-full h-auto object-cover overflow-hidden rounded-[30px]"
-                  priority
                 />
               </div>
             </div>
