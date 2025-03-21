@@ -1,11 +1,62 @@
+'use client'
+
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, Mail, MapPin, Phone, Info } from "lucide-react"
+import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import ProjectPreview from "./components/ProjectPreview"
 
+// Fix image path if needed
+const fixImagePath = (path: string): string => {
+  if (!path) return '/placeholder.svg?height=600&width=800';
+  
+  // Special case for VDB Cardinal images
+  if (path.includes('VDB Cardinal')) {
+    // Replace spaces with %20
+    let fixedPath = path.replace('VDB Cardinal', 'VDB%20Cardinal');
+    
+    // Replace hyphens in filenames
+    if (fixedPath.includes(' - ')) {
+      fixedPath = fixedPath.replace(' - ', '%20-%20');
+    }
+    
+    return fixedPath;
+  }
+  
+  if (path && path.includes(' - ')) {
+    return path.replace(' - ', '%20-%20');
+  }
+  
+  return path;
+};
+
 export default function Home() {
+  // State for loading images
+  const [loadingImages, setLoadingImages] = useState<Record<number, boolean>>({});
+  
+  // Initialize loading state for all images
+  useEffect(() => {
+    const initialLoadingState: Record<number, boolean> = {};
+    projects.forEach((_, index) => {
+      initialLoadingState[index] = true;
+    });
+    setLoadingImages(initialLoadingState);
+    
+    // Force reset loading state after a short delay
+    const timer = setTimeout(() => {
+      const resetState: Record<number, boolean> = {};
+      projects.forEach((_, index) => {
+        resetState[index] = false;
+      });
+      setLoadingImages(resetState);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   // Architecture categories
   const categories = ["All", "Interiors", "Construction", "Landscape", "Urban Planning", "Residential"]
 
@@ -14,50 +65,50 @@ export default function Home() {
     {
       id: 1,
       title: "VDB Cardinall",
-      category: "Residential",
-      image: "/1_3 - Photo.jpg",
+      category: "Interiors",
+      image: "/VDB Cardinal/1_3 - Photo.jpg",
     },
     {
       id: 2,
       title: "Law office",
-      category: "Construction",
-      image: "/placeholder.svg?height=600&width=800",
+      category: "Interiors",
+      image: "/Law office/IMG_5781.JPG",
     },
     {
       id: 3,
-      title: "John's Studio",
-      category: "Landscape",
-      image: "/placeholder.svg?height=600&width=800",
+      title: "B3 Villa",
+      category: "Interiors",
+      image: "/B3 villa/20230502_145803(0)_Original.jpg",
     },
     {
       id: 4,
-      title: "Downtown Revitalization",
-      category: "Urban Planning",
-      image: "/placeholder.svg?height=600&width=800",
+      title: "Aleesha's boutique",
+      category: "Interiors",
+      image: "/Aleesha's boutique/IMG_5759.JPG",
     },
     {
       id: 5,
       title: "Luxury Apartment",
       category: "Interiors",
-      image: "/placeholder.svg?height=600&width=800",
+      image: "/Law office/IMG_5776.JPG",
     },
     {
       id: 6,
       title: "Modern Office Interior",
       category: "Interiors",
-      image: "/placeholder.svg?height=600&width=800",
+      image: "/B3 villa/20230502_145101_Original.jpg",
     },
     {
       id: 7,
       title: "Sustainable Housing",
-      category: "Residential",
-      image: "/placeholder.svg?height=600&width=800",
+      category: "Interiors",
+      image: "/Aleesha's boutique/IMG_5757.JPG",
     },
     {
       id: 8,
       title: "Public Square",
-      category: "Urban Planning",
-      image: "/placeholder.svg?height=600&width=800",
+      category: "Interiors",
+      image: "/VDB Cardinal/5.jpg",
     },
   ]
 
@@ -152,7 +203,7 @@ export default function Home() {
               </div>
               <div className="flex items-center justify-center">
                 <Image
-                  src="/Screenshot 2025-03-21 012109.png"
+                  src={fixImagePath("/VDB Cardinal/3.jpg")}
                   width={750}
                   height={550}
                   alt="Inspiring architecture showcase"
@@ -191,35 +242,68 @@ export default function Home() {
 
             <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 mt-8">
               {projects.map((project) => (
-                <Link href={`/projects/${project.id}`} key={project.id} className="group">
+                <div key={project.id} className="group relative">
                   <div className="relative overflow-hidden rounded-[3mm]">
-                    <Image
-                      src={project.image || "/placeholder.svg"}
-                      width={600}
-                      height={800}
-                      alt={project.title}
-                      className="h-[400px] w-full object-cover transition-all duration-500 group-hover:scale-105 rounded-[3mm]"
-                    />
+                    <div className="relative h-[400px] w-full rounded-[3mm] overflow-hidden">
+                      {loadingImages[project.id - 1] && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+                          <div className="w-8 h-8 border-3 border-[#2a2a2a]/20 border-t-[#2a2a2a] rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                      <Image
+                        src={fixImagePath(project.image) || "/placeholder.svg"}
+                        width={600}
+                        height={800}
+                        alt={project.title}
+                        className={cn(
+                          "h-[400px] w-full object-cover transition-all duration-500 group-hover:scale-105 rounded-[3mm]",
+                          loadingImages[project.id - 1] ? "opacity-40" : "opacity-100"
+                        )}
+                        onLoadingComplete={() => {
+                          setLoadingImages(prev => ({...prev, [project.id - 1]: false}));
+                        }}
+                        onError={() => {
+                          setLoadingImages(prev => ({...prev, [project.id - 1]: false}));
+                        }}
+                      />
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#2a2a2a]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-[#f8f7f4] translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      {project.title === "VDB Cardinall" ? (
-                        <ProjectPreview
-                          trigger={
-                            <h3 className="text-xl font-light flex items-center">
-                              {project.title}
-                              <Info size={16} className="ml-2 text-[#f8f7f4]/70" />
-                            </h3>
-                          }
-                          position="top"
-                          className="z-50"
-                        />
-                      ) : (
-                        <h3 className="text-xl font-light">{project.title}</h3>
-                      )}
+                      <ProjectPreview
+                        trigger={
+                          <h3 className="text-xl font-light flex items-center">
+                            {project.title}
+                            <Info size={16} className="ml-2 text-[#f8f7f4]/70" />
+                          </h3>
+                        }
+                        position="top"
+                        className="z-50"
+                        project={{
+                          id: project.id,
+                          title: project.title,
+                          category: project.category,
+                          location: "Bangalore",
+                          year: "2023",
+                          description: `${project.title} is a stunning project showcasing our expertise in ${project.category.toLowerCase()} design with attention to detail and functionality.`,
+                          image: project.image,
+                          additionalImages: project.id === 1 
+                            ? ["/VDB Cardinal/1_6 - Photo.jpg", "/VDB Cardinal/1_9 - Photo.jpg", "/VDB Cardinal/3.jpg"]
+                            : project.id === 2
+                            ? ["/Law office/IMG_5776.JPG", "/Law office/IMG_5781.JPG", "/Law office/IMG_5783.JPG"]
+                            : project.id === 3
+                            ? ["/B3 villa/20221030_122731_Original.jpg", "/B3 villa/20230502_145101_Original.jpg", "/B3 villa/20230502_145803(0)_Original.jpg"]
+                            : project.id === 4
+                            ? ["/Aleesha's boutique/IMG_5757.JPG", "/Aleesha's boutique/IMG_5759.JPG", "/Aleesha's boutique/IMG_5762.JPG"]
+                            : [project.image, project.image, project.image]
+                        }}
+                      />
                       <p className="text-sm text-[#f8f7f4]/80">{project.category}</p>
                     </div>
                   </div>
-                </Link>
+                  <Link href={`/projects/${project.id}`} className="absolute inset-0 z-10">
+                    <span className="sr-only">View {project.title}</span>
+                  </Link>
+                </div>
               ))}
             </div>
             <div className="flex justify-center mt-12">
@@ -241,11 +325,11 @@ export default function Home() {
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:grid-cols-2">
               <div className="flex items-center justify-center">
                 <Image
-                  src="/placeholder.svg?height=600&width=800"
+                  src={fixImagePath("/B3 villa/20221030_122731_Original.jpg")}
                   width={600}
                   height={800}
                   alt="About Us"
-                  className="aspect-[4/3] overflow-hidden rounded-none object-cover"
+                  className="aspect-[4/3] overflow-hidden rounded-[3mm] object-cover"
                 />
               </div>
               <div className="flex flex-col justify-center space-y-4">
@@ -353,15 +437,15 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-[#2a2a2a]" />
-                    <span className="text-[#2a2a2a]/80">123 Architecture Street, Design District, London</span>
+                    <span className="text-[#2a2a2a]/80">123 Indiranagar Main Road, Bangalore, India</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="h-5 w-5 text-[#2a2a2a]" />
-                    <span className="text-[#2a2a2a]/80">+44 (0) 123 456 7890</span>
+                    <span className="text-[#2a2a2a]/80">+91 98765 43210</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Mail className="h-5 w-5 text-[#2a2a2a]" />
-                    <span className="text-[#2a2a2a]/80">info@architag.co.uk</span>
+                    <span className="text-[#2a2a2a]/80">info@architag.in</span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
